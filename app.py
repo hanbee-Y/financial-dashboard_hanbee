@@ -141,7 +141,7 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 st.sidebar.title("Signal Generator")
 
-ticker_input = st.sidebar.text_input("Enter Tickers (comma-separated)", value="TSLA,NVDA")
+ticker_input = st.sidebar.text_input("Enter Tickers (comma-separated)", value="TSLA:100,NVDA:100")
 start_date = st.sidebar.date_input("Start Date", datetime.date(2024, 1, 1))
 end_date = st.sidebar.date_input("End Date", datetime.date.today())
 
@@ -167,10 +167,35 @@ if start_date >= end_date:
     st.error("Start date must be before end date.")
     st.stop()
 
-raw_tickers = [t.strip().upper() for t in ticker_input.split(',') if t.strip()]
+# Parse input into {ticker: quantity}
+portfolio = {}
+for item in ticker_input.split(","):
+    item = item.strip()
+    if ":" in item:
+        t, q = item.split(":")
+        portfolio[t.strip().upper()] = int(q.strip())
+    else:
+        portfolio[item.strip().upper()] = 0  # default 0 if no quantity
+
+raw_tickers = list(portfolio.keys())
 if not raw_tickers:
     st.warning("Please provide at least one ticker.")
     st.stop()
+
+# --- Simple Portfolio Value ---
+st.sidebar.subheader("Portfolio Value")
+total_value = 0
+for ticker, qty in portfolio.items():
+    try:
+        price = yf.Ticker(ticker).history(period="1d")["Close"].iloc[-1]
+        holding_value = qty * price
+        total_value += holding_value
+        st.sidebar.write(f"{ticker}: {qty} × ${price:.2f} = ${holding_value:,.2f}")
+    except Exception:
+        st.sidebar.write(f"{ticker}: data unavailable")
+
+st.sidebar.metric("Total Value", f"${total_value:,.2f}")
+
 
 portfolio_equity_fig = go.Figure()
 
