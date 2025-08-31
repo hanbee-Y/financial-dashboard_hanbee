@@ -35,8 +35,14 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
+Some libraries may not install correctly depending on your Python version.
+If you run into errors with pip install -r requirements.txt, try installing the packages one at a time, for example:
 
-
-
+```bash
+pip install streamlit
+pip install pandas
+pip install numpy
+...
+```
 
 
