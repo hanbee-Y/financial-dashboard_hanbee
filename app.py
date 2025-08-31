@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.set_page_config(page_title="Trading Signal Dashboard (Tabs)")
+st.set_page_config(page_title="Financial Dashboard")
 
 st.markdown("""
 <style>
@@ -218,6 +218,12 @@ for i, ticker in enumerate(raw_tickers):
             st.write(f"**Industry:** {industry}")
             if market_cap:
                 st.write(f"**Market Cap:** {market_cap:,}")
+            pe_ratio = info.get("trailingPE", None)   
+            fwd_pe = info.get("forwardPE", None)      
+
+            st.write(f"**P/E Ratio (TTM):** {pe_ratio:.2f}" if pe_ratio is not None else "**P/E Ratio (TTM):** N/A")
+            st.write(f"**Forward P/E:** {fwd_pe:.2f}" if fwd_pe is not None else "**Forward P/E:** N/A")
+
         except Exception as e:
             st.warning(f"Could not fetch company info for {ticker}: {e}")
 
