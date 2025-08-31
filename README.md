@@ -7,25 +7,16 @@ A tool to analyze and visualize financial data (stocks, ETFs, crypto) using Yaho
   - Moving Averages (SMA/EMA)
   - RSI (Relative Strength Index)
   - MACD (Moving Average Convergence Divergence)
-  - Bollinger Bands
-  - Stochastic Oscillator
 - **Risk profiles**:
-  - Conservative: safer thresholds, earlier sell signals
-  - Aggressive: higher tolerance, later sell signals
+  - Conservative: safer thresholds
+  - Aggressive: higher tolerance
 - **Portfolio tracking**:
-  - Register current holdings (AAPL)
+  - Register current holdings (example - TSLA:100, NVDA:100)
   - Personalized Buy/Hold/Sell recommendations
 - **Visualizations**:
-  - Price charts with indicator overlays
-  - RSI, MACD, and other signals
+  - Price charts
   - SARIMA forecasting option
 - **Company info**: basic stock metadata (industry, market cap, etc.)
-
-## Tech Stack
-- Python
-- Streamlit
-- yfinance
-- pandas, numpy, matplotlib
 
 ## Installation
 Clone the repository:
