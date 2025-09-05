@@ -124,7 +124,8 @@ footer {display: none;}
 </style>
 """, unsafe_allow_html=True)
 
-
+import ssl
+import certifi
 import streamlit as st, yfinance as yf, datetime, matplotlib.pyplot as plt
 import plotly.graph_objects as go, pandas as pd, numpy as np
 from typing import Dict
@@ -135,6 +136,7 @@ from analytics import summarize_trades, performance_report, trade_stats
 from sarima import suggest_sarima_orders, infer_regular_series
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
+ssl._create_default_https_context = ssl._create_unverified_context
 
 st.sidebar.title("Signal Generator")
 
