@@ -125,9 +125,6 @@ footer {display: none;}
 """, unsafe_allow_html=True)
 
 
-
-
-
 import streamlit as st, yfinance as yf, datetime, matplotlib.pyplot as plt
 import plotly.graph_objects as go, pandas as pd, numpy as np
 from typing import Dict
@@ -204,13 +201,33 @@ tabs = st.tabs(raw_tickers)
 for i, ticker in enumerate(raw_tickers):
     with tabs[i]:
         st.header(f"{ticker}")
+
+        # --- Company Info (safer) ---
         try:
             ticker_obj = yf.Ticker(ticker)
-            info = ticker_obj.info  
-            company_name = info.get("longName", ticker)
+
+            # try new API
+            try:
+                info = ticker_obj.get_info()
+            except Exception:
+                info = {}
+
+            # fast_info fallback
+            fast_info = getattr(ticker_obj, "fast_info", {}) or {}
+
+            company_name = (
+                info.get("longName")
+                or info.get("shortName")
+                or fast_info.get("shortName")
+                or ticker
+            )
             sector = info.get("sector", "N/A")
             industry = info.get("industry", "N/A")
-            market_cap = info.get("marketCap", None)
+            market_cap = (
+                info.get("marketCap")
+                or fast_info.get("marketCap")
+                or None
+            )
 
             st.subheader("Company Profile")
             st.write(f"**{company_name}**")
@@ -218,18 +235,33 @@ for i, ticker in enumerate(raw_tickers):
             st.write(f"**Industry:** {industry}")
             if market_cap:
                 st.write(f"**Market Cap:** {market_cap:,}")
-            pe_ratio = info.get("trailingPE", None)   
-            fwd_pe = info.get("forwardPE", None)      
 
-            st.write(f"**P/E Ratio (TTM):** {pe_ratio:.2f}" if pe_ratio is not None else "**P/E Ratio (TTM):** N/A")
-            st.write(f"**Forward P/E:** {fwd_pe:.2f}" if fwd_pe is not None else "**Forward P/E:** N/A")
+            pe_ratio = info.get("trailingPE")
+            fwd_pe = info.get("forwardPE")
+
+            st.write(f"**P/E Ratio (TTM):** {pe_ratio:.2f}" if pe_ratio else "**P/E Ratio (TTM):** N/A")
+            st.write(f"**Forward P/E:** {fwd_pe:.2f}" if fwd_pe else "**Forward P/E:** N/A")
 
         except Exception as e:
             st.warning(f"Could not fetch company info for {ticker}: {e}")
 
-        df = yf.download(ticker, start=start_date, end=end_date, group_by='ticker', auto_adjust=True)
-        if df.empty:
-            st.warning(f"No data found for {ticker}.")
+        # --- Price Data (safer download) ---
+        try:
+            df = yf.download(
+                ticker,
+                start=start_date,
+                end=end_date,
+                auto_adjust=True,
+                progress=False,
+                threads=False,
+            )
+
+            if df is None or df.empty:
+                st.warning(f"No data found for {ticker}.")
+                continue
+
+        except Exception as e:
+            st.error(f"Data download failed for {ticker}: {e}")
             continue
 
         if isinstance(df.columns, pd.MultiIndex):
