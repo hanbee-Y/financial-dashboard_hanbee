@@ -1,131 +1,3 @@
-import streamlit as st
-
-st.set_page_config(page_title="Financial Dashboard")
-
-st.markdown("""
-<style>
-/* ===== Brand palette & tokens ===== */
-:root {
-  --pink: #dc3f6c;
-  --teal: #719e99;
-  --ink: #151516;
-  --bg: #f7f8f9;
-  --card: #fff;
-  --line: #e6e8eb;
-  --radius: 16px;
-  --shadow: 0 6px 18px rgba(0,0,0,.06);
-}
-
-/* ===== Layout ===== */
-html, body, [data-testid="stAppViewContainer"] {
-  background: var(--bg);
-  color: var(--ink);
-}
-.block-container {
-  max-width: 1200px;
-  padding: 1.5rem 1rem 3rem;
-}
-
-/* ===== Headings / text ===== */
-h1, h2, h3 { 
-  color: var(--pink);
-  letter-spacing: .2px;
-}
-hr { border-color: var(--line); }
-
-/* ===== Sidebar ===== */
-section[data-testid="stSidebar"] {
-  background: linear-gradient(180deg,#fff 0%,#f3f6f6 100%);
-  border-right: 1px solid var(--line);
-}
-section[data-testid="stSidebar"] label,
-section[data-testid="stSidebar"] .stMarkdown {
-  color: var(--ink) !important;
-}
-
-/* ===== Metric cards ===== */
-div[data-testid="stMetric"] {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 1rem;
-}
-div[data-testid="stMetricValue"] {
-  color: var(--pink);
-  font-weight: 700;
-  font-size: 1.7rem;
-}
-
-/* ===== Buttons ===== */
-.stButton>button {
-  background: var(--pink);
-  color: #fff;
-  border: 0;
-  border-radius: 12px;
-  padding: .6rem 1rem;
-  box-shadow: var(--shadow);
-  cursor: pointer;
-}
-.stButton>button:hover { filter: brightness(.95); }
-
-/* ===== Tabs ===== */
-.stTabs [data-baseweb="tab"] {
-  border-radius: 999px;
-  padding: .5rem 1rem;
-  margin-right: .4rem;
-  border: 1px solid transparent;
-  background: transparent;
-}
-.stTabs [data-baseweb="tab"][aria-selected="true"] {
-  background: var(--pink);
-  border-color: var(--pink);
-  color: #fff;
-}
-.stTabs [data-baseweb="tab"]:hover { border-color: var(--pink); }
-
-/* ===== Expanders ===== */
-[data-testid="stExpander"] {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-[data-testid="stExpander"] summary {
-  color: var(--pink);
-  font-weight: 600;
-}
-
-/* ===== Tables ===== */
-[data-testid="stDataFrame"] {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-[data-testid="stDataFrame"] thead th {
-  background: #fafbfc;
-  font-weight: 600;
-}
-
-/* ===== Plots ===== */
-[data-testid="stPlotlyChart"],
-.js-plotly-plot {
-  background: var(--card) !important;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: .4rem;
-}
-
-/* Uncomment to hide menu/footer
-#MainMenu {display: none;}
-footer {display: none;}
-*/
-</style>
-""", unsafe_allow_html=True)
-
-import ssl
-import certifi
 import streamlit as st, yfinance as yf, datetime, matplotlib.pyplot as plt
 import plotly.graph_objects as go, pandas as pd, numpy as np
 from typing import Dict
@@ -136,11 +8,139 @@ from analytics import summarize_trades, performance_report, trade_stats
 from sarima import suggest_sarima_orders, infer_regular_series
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
-ssl._create_default_https_context = ssl._create_unverified_context
+st.set_page_config(page_title="Trading Signal Dashboard (Tabs)", layout="wide")
+st.markdown("""
+<style>
+/* ====== brand tokens ====== */
+:root{
+  --primary: #dc3f6c;             /* your pink */
+  --secondary: #719e99;           /* your teal */
+  --text: #151516;                /* body text */
+  --bg-soft: #f7f8f9;             /* page bg tint */
+  --card-bg: #ffffff;             /* cards/tables */
+  --border: #e6e8eb;
+  --radius: 16px;
+  --shadow: 0 8px 24px rgba(0,0,0,.06);
+}
+
+/* ====== page chrome ====== */
+html, body, [data-testid="stAppViewContainer"]{
+  color: var(--text);
+  background: var(--bg-soft);
+}
+.block-container{               /* main content wrapper */
+  padding-top: 1.5rem;
+  padding-bottom: 3rem;
+  max-width: 1250px;
+}
+
+/* ====== typography ====== */
+h1, h2, h3{
+  color: var(--primary);
+  letter-spacing: .2px;
+}
+hr {border-color: var(--border);}
+
+/* ====== sidebar ====== */
+section[data-testid="stSidebar"]{
+  background: linear-gradient(180deg, #ffffff 0%, #f3f6f6 100%);
+  border-right: 1px solid var(--border);
+}
+section[data-testid="stSidebar"] .stMarkdown, 
+section[data-testid="stSidebar"] label{
+  color: var(--text) !important;
+}
+
+/* ====== metric “cards” ====== */
+div[data-testid="stMetric"]{
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+div[data-testid="stMetricValue"]{
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 28px;
+}
+
+/* ====== buttons ====== */
+.stButton>button{
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: .6rem 1rem;
+  box-shadow: var(--shadow);
+}
+.stButton>button:hover{
+  filter: brightness(.95);
+}
+
+/* ====== tabs ====== */
+.stTabs [data-baseweb="tab"]{
+  padding: .6rem 1rem;
+  border-radius: 999px;
+  margin-right: .35rem;
+  background: transparent;
+  border: 1px solid transparent;
+}
+.stTabs [data-baseweb="tab"][aria-selected="true"]{
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.stTabs [data-baseweb="tab"]:hover{
+  border-color: var(--primary);
+}
+
+/* ====== expanders ====== */
+[data-testid="stExpander"]{
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+}
+[data-testid="stExpander"] details summary{
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ====== dataframes/tables ====== */
+[data-testid="stDataFrame"]{
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+[data-testid="stDataFrame"] thead tr th{
+  background: #fafbfc;
+  font-weight: 600;
+}
+
+/* ====== plot containers (matplotlib/plotly) ====== */
+[data-testid="stMarkdownContainer"] .js-plotly-plot, 
+[data-testid="stPlotlyChart"]{
+  background: var(--card-bg) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: .4rem;
+}
+
+/* ====== optional: hide menu/footer (uncomment to lock UI) ====== */
+/*
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+*/
+</style>
+""", unsafe_allow_html=True)
+
 
 st.sidebar.title("Signal Generator")
 
-ticker_input = st.sidebar.text_input("Enter Tickers (comma-separated)", value="TSLA:100,NVDA:100")
+ticker_input = st.sidebar.text_input("Enter Tickers (comma-separated)", value="TSLA,NVDA")
 start_date = st.sidebar.date_input("Start Date", datetime.date(2024, 1, 1))
 end_date = st.sidebar.date_input("End Date", datetime.date.today())
 
@@ -166,35 +166,10 @@ if start_date >= end_date:
     st.error("Start date must be before end date.")
     st.stop()
 
-# Parse input into {ticker: quantity}
-portfolio = {}
-for item in ticker_input.split(","):
-    item = item.strip()
-    if ":" in item:
-        t, q = item.split(":")
-        portfolio[t.strip().upper()] = int(q.strip())
-    else:
-        portfolio[item.strip().upper()] = 0  # default 0 if no quantity
-
-raw_tickers = list(portfolio.keys())
+raw_tickers = [t.strip().upper() for t in ticker_input.split(',') if t.strip()]
 if not raw_tickers:
     st.warning("Please provide at least one ticker.")
     st.stop()
-
-# --- Simple Portfolio Value ---
-st.sidebar.subheader("Portfolio Value")
-total_value = 0
-for ticker, qty in portfolio.items():
-    try:
-        price = yf.Ticker(ticker).history(period="1d")["Close"].iloc[-1]
-        holding_value = qty * price
-        total_value += holding_value
-        st.sidebar.write(f"{ticker}: {qty} × ${price:.2f} = ${holding_value:,.2f}")
-    except Exception:
-        st.sidebar.write(f"{ticker}: data unavailable")
-
-st.sidebar.metric("Total Value", f"${total_value:,.2f}")
-
 
 portfolio_equity_fig = go.Figure()
 
@@ -202,79 +177,56 @@ tabs = st.tabs(raw_tickers)
 
 for i, ticker in enumerate(raw_tickers):
     with tabs[i]:
-        st.header(f"{ticker}")
+        st.header(ticker)
 
-        # --- Company Info (safer) ---
+        # --- Company Profile (robust) ---
         try:
-            ticker_obj = yf.Ticker(ticker)
+            t = yf.Ticker(ticker)
 
-            # try new API
+            # New API first; it can still fail → guard it
             try:
-                info = ticker_obj.get_info()
+                info = t.get_info() or {}
             except Exception:
                 info = {}
 
-            # fast_info fallback
-            fast_info = getattr(ticker_obj, "fast_info", {}) or {}
+            # Lightweight fallback for basics
+            fast = getattr(t, "fast_info", {}) or {}
 
             company_name = (
                 info.get("longName")
                 or info.get("shortName")
-                or fast_info.get("shortName")
+                or info.get("displayName")
                 or ticker
             )
-            sector = info.get("sector", "N/A")
-            industry = info.get("industry", "N/A")
-            market_cap = (
-                info.get("marketCap")
-                or fast_info.get("marketCap")
-                or None
-            )
+            sector   = info.get("sector") or "N/A"
+            industry = info.get("industry") or "N/A"
+            market_cap = fast.get("market_cap") or info.get("marketCap")
 
             st.subheader("Company Profile")
             st.write(f"**{company_name}**")
             st.write(f"**Sector:** {sector}")
             st.write(f"**Industry:** {industry}")
             if market_cap:
-                st.write(f"**Market Cap:** {market_cap:,}")
-
-            pe_ratio = info.get("trailingPE")
-            fwd_pe = info.get("forwardPE")
-
-            st.write(f"**P/E Ratio (TTM):** {pe_ratio:.2f}" if pe_ratio else "**P/E Ratio (TTM):** N/A")
-            st.write(f"**Forward P/E:** {fwd_pe:.2f}" if fwd_pe else "**Forward P/E:** N/A")
-
+                st.write(f"**Market Cap:** {int(market_cap):,}")
         except Exception as e:
             st.warning(f"Could not fetch company info for {ticker}: {e}")
 
-        # --- Price Data (safer download) ---
-        try:
-            df = yf.download(
-                ticker,
-                start=start_date,
-                end=end_date,
-                auto_adjust=True,
-                progress=False,
-                threads=False,
-            )
-
-            if df is None or df.empty:
-                st.warning(f"No data found for {ticker}.")
-                continue
-
-        except Exception as e:
-            st.error(f"Data download failed for {ticker}: {e}")
+        df = yf.download(
+            ticker, start=start_date, end=end_date,
+            group_by="ticker", auto_adjust=True, progress=False
+        )
+        if df is None or df.empty:
+            st.warning(f"No data found for {ticker}.")
             continue
 
         if isinstance(df.columns, pd.MultiIndex):
-            try:
+            if ticker in df.columns.get_level_values(0):
                 df = df.xs(ticker, level=0, axis=1)
-            except Exception:
-                try:
-                    df = df.xs(ticker, level='Ticker', axis=1)
-                except Exception:
-                    df.columns = [c[0] for c in df.columns]
-        
+            elif "Ticker" in (df.columns.names or []):
+                df = df.xs(ticker, level="Ticker", axis=1)
+            else:
+                df.columns = [c[0] if isinstance(c, tuple) else c for c in df.columns]
+
         df = add_moving_averages(df, short=short_window, long=long_window)
         df = add_rsi(df)
         df = add_macd(df)
@@ -365,6 +317,7 @@ for i, ticker in enumerate(raw_tickers):
 
         portfolio_equity_fig.add_trace(go.Scatter(x=df.index, y=df['Consensus_equity'], mode='lines', name=f"{ticker} (Consensus)"))
 
+        # --- SARIMA Forecast (per ticker tab) ---
         st.subheader("SARIMA Forecast")
         fc_steps = st.slider(f"Forecast horizon (periods) — {ticker}", min_value=5, max_value=120, value=30, step=5, key=f"fc_{ticker}")
 
